@@ -1,3 +1,2 @@
 Make-Funktionalitaet besser
-Timestamp: von .mixer
-ev. aus CVS-Stamp
+  Problem: Erst nach dem Parsen kann man sehen, ob was getan werden muss.
