@@ -122,7 +122,7 @@ def workerfunc(path,filename):
                 e = maxml.parse_string_for_rewrite(t)
                 writeoutdoc(e.subs,out)
             else:
-                err.write('Warning: Variable '+a['parsepar']+' undefined!\n')
+                err.write('Warning: Variable '+a['parsevar']+' undefined!\n')
         elif a.has_key('func'):
             if not(funcs.__dict__.has_key(a['func'])):
                 err.write('Warning: Function "'+a['func']+'" not found for '+
@@ -332,6 +332,10 @@ print 'Reading configuration...'
 config = {}
 execfile(MIXERLIB+'config',config)
 config['today'] = time.ctime()
+
+# Update our configuration from the local one in funcs:
+try: config.update(funcs.config)
+except: pass   # we ignore if there is no funcs.config
 
 print 'Reading addresses...'
 addresses = maxml.parse_file(MIXERLIB+'addresses')
