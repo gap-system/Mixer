@@ -169,7 +169,10 @@ Here is a table of replacements, that are performed:
   \verb!<mixer part="abc"/>!   & $\to$ &
   the content of the part \verb!abc! of the current page which is found
   in the file \verb!xyz.abc! in the same directory, if we are working
-  on the file \verb!xyz.mixer! currently. \\
+  on the file \verb!xyz.mixer! currently. If the file \verb!xyz.abc! does
+  not exist, a warning is given out. This warning can be switched off
+  by specifying an additional attribute \verb!needed="no"! in the
+  \verb!mixer! tag.\\
   \hspace*{-3mm}
   \begin{tabular}[t]{l}\verb!<mixer person="ID"!\\\verb! data="KEY"/>!
   \end{tabular} & $\to$ &
@@ -438,6 +441,10 @@ is \verb!main!, the tree from \verb!x.mixer! is used.
 If the value is \verb!title!, a special case occurs, which is described
 in the following section. For all other values \verb!y!, the content of 
 the file \verb!x.y! in the directory \verb!dir! is taken.
+
+If the file \verb!x.y! does not exist, a warning is given out.
+This warning can be switched off by specifying an additional attribute
+\verb!needed="no"! in the \verb!mixer! tag.
 
 Example:
 

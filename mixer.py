@@ -98,9 +98,12 @@ def workerfunc(path,filename):
                 else:             writeoutdoc('Empty title!',out)
             else:  # handle other parts
                 partfile = MIXERROOT+path+filename+'.'+a['part']
+                if a.haskey('needed') and a['needed'] == 'no':
+                    ignore = 1
                 if not(os.path.exists(partfile)):
-                    err.write('Warning: Part "'+a['part']+'" not found for '+
-                              'document "'+path+filename+'.mixer"!\n')
+                    if not(ignore):
+                      err.write('Warning: Part "'+a['part']+'" not found for '+
+                                'document "'+path+filename+'.mixer"!\n')
                 else:
                     e = maxml.parse_file_for_rewrite(partfile)
                     writeoutdoc(e.subs,out)
