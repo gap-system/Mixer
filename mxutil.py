@@ -20,9 +20,10 @@ def make_abs_path(c,p):
     return os.path.normpath(os.path.join(c,p))
        
 def terminate_with_slash(p):
-    '''Appends a slash if p does not end in a slash.'''
-    if p[-1] != '/': return p+'/'
-    else:            return p
+    '''Appends a slash if p does not end in a slash 
+       (or backslash on Windows).'''
+    if p[-1] != os.sep: return p+os.sep
+    else:               return p
 
 def find_root():
     '''Finds the current working directory and the MIXERROOT and returns 
@@ -32,7 +33,7 @@ def find_root():
     try:
         pwd = os.environ['PWD']
     except:
-        pwd = '/'
+        pwd = os.sep
     cwd = os.getcwd()
     if os.path.realpath(pwd) != cwd: pwd = cwd
     pwd = terminate_with_slash(pwd)
@@ -49,10 +50,16 @@ def find_root():
                     'a non-directory (ignored).\n')
         else: return (pwd,terminate_with_slash(m))
 
+    # "Eiertanz" for Windows drive letters:
+    if os.sep == '/':
+        top = '/'
+    else:
+        (drive,tail) = os.path.splitdrive(pwd)
+        top = drive+os.sep
     # Search for an entry called 'MIXERROOT':
     c = pwd
-    while c != '/':
-        t = c+'MIXERROOT'
+    while c != top:
+        t = os.path.join(c,'MIXERROOT')
         if os.path.exists(t):
             if os.path.isfile(t):
                 if os.path.getsize(t) == 0:
@@ -76,7 +83,7 @@ def find_root():
                     sys.exit(3)
                 return (pwd,terminate_with_slash(m))
         # if we come here, we have to go up one directory
-        p = c.rfind('/',0,-1)
+        p = c.rfind(os.sep,0,-1)
         if p < 0: break    # we terminate
         else: c = c[:p+1]
     # here we terminated, we have no idea of the MIXERROOT:

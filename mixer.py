@@ -20,7 +20,7 @@ err = sys.stderr
 
 # First we find the MIXERROOT (note: this does not return if nothing is found!)
 (startdir,MIXERROOT) = mxutil.find_root()
-MIXERLIB = MIXERROOT+'lib/'
+MIXERLIB = mxutil.terminate_with_slash(os.path.join(MIXERROOT,'lib'))
 if startdir[:len(MIXERROOT)] != MIXERROOT:
     err.write("Error: Current directory is not in subtree of MIXERROOT!\n")
     err.write("       Current dir: "+startdir+"\n")
@@ -48,16 +48,16 @@ def search_up(MIXERROOT,path,filename):
     None if the file is not found. filename should usually not contain
     slashes. If found the path to it from MIXERROOT is returned.'''
     while 1:
-        if os.path.exists(MIXERROOT+path+filename):
+        if os.path.exists(os.path.join(MIXERROOT,path,filename)):
             return path
         if path == '': break
-        p = path.rfind('/',0,-1)
+        p = path.rfind(os.sep,0,-1)
         if p < 0: 
             path = ''
         else:
-            path = path[p+1]
-    if os.path.exists(MIXERROOT+'lib/'+filename):
-        return 'lib/'
+            path = path[p+1:]
+    if os.path.exists(os.path.join(MIXERROOT,'lib',filename)):
+        return 'lib'+os.sep
     return None
 
 def workerfunc(path,filename):
