@@ -16,6 +16,7 @@ Text darunter
 <mixer person="Max Neunhoeffer" data="name_link"/>
 <mixer person="Max Neunhoeffer" data="name_link_email"/>
 <mixer myfunc="hallo"/>
+<mixer parsevar="mysubtree"/>
 <mixer manual="Tutorial: The GAP System"/>
 <mixer manual="Tutorial: The GAP System">Mein Text</mixer>
 <![CDATA[Text]]>

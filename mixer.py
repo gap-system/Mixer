@@ -111,6 +111,15 @@ def workerfunc(path,filename):
                 out.write(config[a['var']])
             else:
                 err.write('Warning: Variable '+a['var']+' undefined!\n')
+        elif a.has_key('parsevar'):
+            if config.has_key(a['parsevar']):
+                t = '<?xml version="1.0" encoding="ISO-8859-1"?>\n<mixer>\n'+\
+                    config[a['parsevar']] + \
+                    '</mixer>'
+                e = maxml.parse_string_for_rewrite(t)
+                writeoutdoc(e.subs,out)
+            else:
+                err.write('Warning: Variable '+a['parsepar']+' undefined!\n')
         elif a.has_key('func'):
             if not(funcs.__dict__.has_key(a['func'])):
                 err.write('Warning: Function "'+a['func']+'" not found for '+

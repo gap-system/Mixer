@@ -83,6 +83,20 @@ def parse_file_for_rewrite(f):
     fi.close()
     return objectify(p(s))
 
+def parse_string_for_rewrite(s):
+    '''Parses an XML document, returns a tree structure from which the
+    file can be reconstructed (i.e. entities, comments and CDATA sections
+    are preserved). If a parser error occurs, the error is printed and
+    an exception is thrown.'''
+    p = pyRXP.Parser()
+    p.ReturnComments = 1
+    p.ReturnCDATASectionsAsTuples = 1
+    p.ReturnProcessingInstructions = 1
+    p.ExpandGeneralEntities = 0
+    p.ExpandCharacterEntities = 0
+    #p.ReturnList = 1
+    return objectify(p(s))
+
 
 def parse_file(f):
     '''Parses an XML document, returns a tree structure, removing comments
@@ -97,6 +111,18 @@ def parse_file(f):
     fi = file(f)
     s = fi.read()
     fi.close()
+    return objectify(p(s))
+
+def parse_string(s):
+    '''Parses an XML document, returns a tree structure, removing comments
+    and expanding entities and CDATA sections. If a parser error occurs,
+    the error is printed and an exception is thrown.'''
+    p = pyRXP.Parser()
+    p.ReturnComments = 0
+    p.ReturnCDATASectionsAsTuples = 0
+    p.ReturnProcessingInstructions = 1
+    p.ExpandGeneralEntities = 1
+    p.ExpandCharacterEntities = 1
     return objectify(p(s))
 
 

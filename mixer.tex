@@ -444,6 +444,21 @@ Note that in all cases the inserted subtree is traversed recursively
 before the rest of the first tree.
 
 
+\subsection{Parsed variable substitution}
+\label{parsedvarsub}
+
+Any element of type \verb!mixer! having an attribute \verb!parsevar! is
+replaced by a full tree from the variable that has the name of the
+value of the attribute. That means that the (string) content of the
+variable is parsed (an XML file header is prepended indicating
+ISO-8859-1 encoding and one pair of tags \verb!<mixer>! and \verb!</mixer>!
+is put around the content of the variable). The resulting tree is
+then written out recursively, following the standard rules. 
+
+Note that this of course can lead to infinite recursion, as variable
+substitution, part substitution, parsed variable substitution, and 
+all other substitutions are done recursively.
+
 \subsection{The title of a page}
 
 There is a special case of part substitution, which was already mentioned 

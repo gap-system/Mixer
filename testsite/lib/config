@@ -4,3 +4,5 @@ guck = 123
 title = 'Heiligsblechle!'
 
 GAPManualLink = 'http://www.math.rwth-aachen.de/GAP'
+
+mysubtree = '<mixer var="title"/> ist <b>schwaebisch</b>.'
