@@ -98,10 +98,8 @@ def workerfunc(path,filename):
                 else:             writeoutdoc('Empty title!',out)
             else:  # handle other parts
                 partfile = MIXERROOT+path+filename+'.'+a['part']
-                if a.haskey('needed') and a['needed'] == 'no':
-                    ignore = 1
                 if not(os.path.exists(partfile)):
-                    if not(ignore):
+                    if not(a.has_key('needed')) or a['needed'] != 'no':
                       err.write('Warning: Part "'+a['part']+'" not found for '+
                                 'document "'+path+filename+'.mixer"!\n')
                 else:
