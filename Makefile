@@ -38,3 +38,7 @@ dist: clean mixer.pdf
 	(cd tmp ; tar czvf ../../mixer.tar.gz mixer)
 	rm -rf tmp
 
+copytoweb: mixer.pdf ../mixer.tar.gz
+	cp -a mixer.pdf ../mixer.tar.gz \
+              /usr/local/www-homes/Max.Neunhoeffer/Computer/Software/mixer
+	
