@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- This is a sample document. -->
+
+<mixer template="defaultframe.tmpl" 
+       style="/lib/default.css" 
+       oldstyle="/lib/default.css">
+
+<h1>Überschrift</h1>
+
+Text darunter
+
+</mixer>

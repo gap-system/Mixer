@@ -1,0 +1,77 @@
+To those interested in the new GAP web pages!
+
+This mail is an attempt to explain the ideas of a proposal for a general
+concept for the GAP web pages. The main intention is that we all agree
+on such a general concept, such that those people actually editing and
+producing the pages can build on it.
+
+Below are a few statements to which I hope you agree. They are roughly
+sorted from "trivial and everybody agrees" to "possibly controversal".
+
+The ideas in these statements have found their way into a new tool
+called "mixer", which is now documented and available from the following
+web page:
+
+  http://www.math.rwth-aachen.de/~Max.Neunhoeffer/mixer
+
+Although the mixer was developped with the GAP web pages in mind, I think 
+it is usable in much more general situations.
+
+Joachim Neubueser and Volkmar Felsch already have used this for parts of
+the site successfully and did find it rather handy. They hope to show
+the result of this work in the near future via CVS...
+
+
+Notation: With "the GAP web site" or "the site" I mean the set of web pages
+for GAP which are maintained in the CVS repository in St. Andrews, not
+including the private pages of GAP package authors.
+
+(1) The pages in the GAP web site should have a consistent "look and feel".
+(2) The GAP web site can be thought of as a directed graph where the pages
+    are the vertices and the (internal) links are the edges.
+
+(3) For all kinds of "visitors" of these pages it must be easy to find the
+    information they are interested in.
+(4) To this end we should define a "spanning tree" of the above mentioned
+    graph and give every single page in the site a canonical position in
+    this tree.
+(5) This does *not* mean that the additional "cross links" in the graph
+    are deleted. To the contrary they must be preserved for quick navigation.
+(6) However the tree structure and the current position within the tree
+    should be visible to the visitor.
+(7) The "left side bar" in the current draft of the new pages is a good first
+    step for (6) but should be improved to make the underlying tree structure
+    more transparent to visitors.
+
+(8) Currently the tools for maintenance (basically "input2html" and friends)
+    do not really offer support for (6) and (7).
+(9) For "input2html" there is basically no documentation which makes it
+    really difficult to maintain the pages.
+(10) Maintenance of the web pages should be extremely simple for page authors.
+    Especially it should not be necessary for them to bother themselves 
+    with the navigation infrastructure in the side bar (or alternatives...) 
+    and it should not be necessary to type tedious relative paths like
+    "../../../../Gap4/Manual/ref" for internal links at all.
+(11) Usage of modern tools (like XML, web standards, ...) is desirable,
+    as long as no complicated installation procedure is necessary.
+
+(12) Having agreed on a general concept (something like (4)-(7)) we need
+    improved tools to implement it, get rid of the problems in (8)-(10) and
+    make life easier for page authors.
+
+
+Final note:
+
+The mixer (in my opinion) does the job of input2html and solves the
+above mentioned problems with it. It is a generic tool to maintain a
+web site like the GAP site, for which I have also other applications in
+mind. It consists of a relatively small python script, uses XML heavily,
+produces pages according to the XHTML 1.0 standard and is easy to use and 
+well documented. 
+
+Installation of the mixer is relatively easy (untar;make), the only software
+needed is Python version >=2.2 (which is already installed on chrystal)
+and a C compiler to compile an extension library for Python.
+
+Best regards,
+  Max.

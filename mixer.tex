@@ -1,0 +1,662 @@
+%
+% Documentation for the mixer - a tool for the management of web sites.
+%
+% Copyright (C) 2003 Max Neunhoeffer, 
+%                    Lehrstuhl D fuer Mathematik, RWTH Aachen
+% 
+% This file is protected under the GNU General Public License
+% (see the file "GPL.txt" in die main distribution directory for details).
+%
+% $Id$
+%
+
+\documentclass[german,11pt]{article}
+
+\parindent0pt
+\usepackage{babel}
+\usepackage[compat2,
+            a4paper,nohead]{geometry}
+\usepackage{times}
+\usepackage[latin1]{inputenc}
+\usepackage{color}
+\definecolor{MyBlue}{rgb}{0.01,0.05,0.5}
+\definecolor{MyGreen}{rgb}{0.01,0.4,0.05}
+\definecolor{MyRed}{rgb}{0.7,0.01,0.05}
+\usepackage[colorlinks=true,%hypertex,
+            linkcolor=MyBlue,urlcolor=MyRed,citecolor=MyGreen,
+            pdftitle={mixer - maintaining web sites easily},
+            pdfauthor={Max Neunh\string\öffer},
+            pdfsubject={mixer},
+            pdfkeywords={content management mixer web site tree}]{hyperref}
+
+\newcommand{\mixer}{\texttt{mixer}}
+\newcommand{\MIXERROOT}{\texttt{MIXERROOT}}
+
+\begin{document}
+\title{{\mixer} --- maintaining web sites easily}
+\author{Max Neunhöffer \\ \texttt{max.neunhoeffer@math.rwth-aachen.de}}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\section{Introduction and Basic Idea}
+
+If you have a rough idea what the {\mixer} is and just want to see quickly
+how it all works, have a look at the examples in section \ref{examples}
+and then read section \ref{hurry}. The gory details are then covered in
+sections \ref{notation} to \ref{autonav}.
+
+The {\mixer} is little Max's version of a "`Content Management System"'.
+The goal is to help the user to maintain a web site consisting of
+a hierarchy of web pages in a consistent way. Repeating parts of
+these pages should each be stored and maintained in a single place
+and an easily understandable procedure should make the final pages
+from the input the user enters.
+
+For each page this procedure basically pastes together various files
+from different places in a well-defined way and replaces certain
+elements by other stuff. Things like navigation tools for the visitors
+of the site are generated automatically from available data.
+
+The main design principles are:
+\begin{itemize}
+\setlength{\parsep}{0mm}
+ \item SIMPLICITY,
+ \item well-definedness,
+ \item good documentation,
+ \item the use of standard web technology (XML, XHTML, style sheets).
+\end{itemize}
+
+\section{Learning by example}
+\label{examples}
+
+Assume you have a directory \verb!DIR! and the following list of files
+and directories:
+
+\begin{verbatim}
+DIR/MIXERROOT
+DIR/lib/addresses
+DIR/lib/config
+DIR/lib/default.html
+DIR/index.mixer
+\end{verbatim}
+
+The {\MIXERROOT} file is empty, \verb!addresses! is a address database
+in a certain format and \verb!config! contains some variable settings.
+Assume \verb!default.html! looks like this:
+
+{\small
+\begin{verbatim}
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <link href="/lib/default.css" type="text/css" rel="StyleSheet" />
+  <style type="text/css" media="screen">@import url(/lib/default.css);</style>
+  <title><mixer var="title">Here will be the title</mixer></title>
+</head>
+<body>
+<mixer part="main">Here will be the main part of the page</mixer>
+</body>
+</html>
+\end{verbatim}}
+
+and \verb!index.mixer! looks like this:
+
+\begin{verbatim}
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<mixer template="default.tmpl"> 
+<mixertitle>My title</mixertitle>
+
+<h1><mixer part="title"/></h1>
+
+<p>Current semester: <mixer var="semester"/></p>
+<p>Author: <mixer person="Max Neunhoeffer" data="name_link"/></p>
+<p>Some weird display, possibly navigation:<mixer func="myfunc"/></p>
+
+</mixer>
+\end{verbatim}
+
+Then the {\mixer} does the following for you: 
+
+It takes the file 
+\verb!index.mixer!, reads off the name \verb!default.tmpl! from the
+\verb!template! attribute and starts with \verb!default.tmpl! in the
+\verb!lib! directory and produces a file \verb!index.html! by
+replacing things.
+
+The content from the file \verb!index.mixer! (beginning with the
+\verb!<h1>! is inserted instead of 
+
+\hspace*{5mm}\verb!<mixer part="main"/>!
+
+and the title "`My title"' is inserted instead of \verb!<mixer part="title"/>!
+in the head of the document and in the \verb!<h1>! element.
+
+The value of the variable \verb!semester! is substituted for
+\verb!<mixer var="semester"/>! and from the address database
+a link to the personal page of Max Neunhöffer together with his
+name is inserted instead of 
+
+\hspace*{1cm}\verb!<mixer person="Max Neunhoeffer" data="name_link"/>!
+
+It is even possible to put the output of a user defined function \verb!myfunc!
+in the final page instead of 
+
+\hspace*{5mm}\verb!<mixer func="myfunc"/>!
+
+This makes it for example possible to automatically generate navigation
+tools for a whole web site.
+
+This document is the manual to the {\mixer}, a program that achieves.
+
+
+\section{If you are in a hurry}
+\label{hurry}
+
+Here is a table of replacements, that are performed:
+
+\bigskip
+\begin{tabular}{p{2in}cp{3.5in}}
+  \verb!<mixer part="main"/>!  & $\to$ &
+  the content of the current \verb!.mixer! file. \\
+  \verb!<mixer part="title"/>! & $\to$ &
+  the title of the current page from the \verb!mixertitle! element. \\
+  \verb!<mixer var="uvw"/>!    & $\to$ &
+  the value of the variable \verb!uvw! in the configuration database. \\
+  \verb!<mixer part="abc"/>!   & $\to$ &
+  the content of the part \verb!abc! of the current page which is found
+  in the file \verb!xyz.abc! in the same directory, if we are working
+  on the file \verb!xyz.mixer! currently. \\
+  \hspace*{-3mm}
+  \begin{tabular}[t]{l}\verb!<mixer person="ID"!\\\verb! data="KEY"/>!
+  \end{tabular} & $\to$ &
+  the entry under the key \verb!KEY! of the person with id \verb!ID! in
+  the address database \\
+  \verb!<mixer func="hij"/>!   & $\to$ &
+  the result of the user defined function \verb!hij! \\
+  \verb!<mixer klm="xyz"/>!    & $\to$ &
+  the result of the user defined function \verb!klm!. Here \verb!klm! must
+  not be equal to one of the other predefined attributes. \\
+  \verb!href!-attributes       & $\to$ &
+  links not containing a colon and starting with a slash are interpreted
+  as links relative to the root of the site and are replaced by links
+  relative to the current file, variable names in links, which are enclosed
+  in double curly brackets, are replaced \\
+  \verb!<link href="opq.css"/>! & $\to$ &
+  the value of the \verb!href! is replaced by the value of the (optional) 
+  \verb!oldstyle! attribute of the \verb!mixer! element in the
+  \verb!.mixer! file. \\
+  \hspace*{-5mm}
+  \begin{tabular}[t]{l}\verb!<style>@import!\\\verb! url(opq.css);</style>!
+  \end{tabular} & $\to$ &
+  the link is replaced by the value of the (optional) \verb!style! attribute
+  of the \verb!mixer! element in the \verb!.mixer! file.
+\end{tabular}
+
+
+\section{Notation}
+\label{notation}
+
+The {\mixer} feels responsible for a full subtree of the file system.
+This tree is called "`the web site"' and the absolute path name to
+its top is called \MIXERROOT. Individual HTML-files within this
+subtree are called "`web pages"'.
+
+\section{Installation of the \mixer}
+
+
+First note that the {\mixer} needs Python version 2.2 or newer and that
+this must be the version of Python coming up if one calls \verb!python!.
+
+Untar the archive \verb!mixer.tar.gz! (possibly your version contains
+some version number). This will create a directory \verb!mixer! where
+the code resides. The {\mixer} is written in Python, however it uses
+an extension of the Python interpreter which is written in C and uses
+the C programm \verb!rxp! as an XML parser. Therefore some compilation
+is needed. This is done by doing \verb!make! in the {\mixer} directory.
+
+The only further step for installation is to create a symbolic link from
+any position which is in your \verb!PATH! (for example \verb!/usr/local/bin!)
+to the file \verb!mixer.py! in the {\mixer} directory.
+
+
+\section{First steps for a new web site}
+
+
+To get things going, you need at least:
+
+A directory with an empty file with the name \verb!MIXERROOT! and a
+subdirectory \verb!lib!.
+
+You need a file with the name \verb!addresses! in the \verb!lib! directory.
+It is a valid XML file with only one element of type \verb!addresses! that
+contains elements of type \verb!person! with arbitrary attributes.
+
+You further need a file with the name \verb!config! in the \verb!lib! 
+directory. It must be a valid Python module. You can define variables
+in there in Python notation. All variable values must be strings.
+
+The file \verb!funcs.py! in the \verb!lib! directory is optional and 
+only used if you want to use user defined functions.
+
+To see the {\mixer} doing something you need at least one template file
+and a file with \verb!.mixer! at the end.
+
+
+\section{Finding the \MIXERROOT}
+
+The {\mixer} can be invoked from anywhere within the file system tree of the
+web site. It determines the {\MIXERROOT} by looking upwards for an empty
+file with the name \MIXERROOT. Here are the details:
+
+After invocation {\mixer} first determines an absolute path to the
+current working directory. This is done by looking at the environment
+variable \verb!PWD!, which is set by most shells to an absolute path
+to the current working directory. However, this can contain symbolic links
+embedded in the path. So {\mixer} checks whether this directory is the
+same as the directory that the C-library function \texttt{getcwd()}
+returns. If both paths refer to the same physical directory, then
+the value of \verb!PWD! is taken, otherwise the result of \texttt{getcwd()}.
+
+The {\mixer} then goes up in the file tree by removing parts at the end of
+the path, until it finds an empty file with the name \MIXERROOT. The
+path pointing to the corresponding directory is the \MIXERROOT.
+
+The reason for taking the value of \verb!PWD! is that symbolic links
+within this path should be preserved. The comparison with the result of
+\texttt{getcwd()} is done just to be save. Note that the file system subtree
+below {\MIXERROOT} \textbf{must not} contain symbolic links to subdirectories.
+
+\section{How does the {\mixer} put together web pages?}
+\label{puttogether}
+
+The {\mixer} first reads the configuration database in
+\MIXERROOT\verb!/lib/config! and then the address database, which is in
+the file \MIXERROOT\verb!/lib/addresses!. 
+
+After that it interprets the
+file \MIXERROOT\verb!/lib/funcs.py! (if it exists) as a Python script
+to get hold of the user specified functions. Then it walks recursively
+through the whole subtree below {\MIXERROOT} and does the following job
+on all files ending in \verb!.mixer!:
+
+Assume it works on a file \verb!xyz.mixer!, which has to be a valid
+XML-file with top level element of type \verb!mixer!, having an
+attribute \verb!template!. The value of this attribute has to be
+one of the template documents (without any path). The referenced template
+document also has to be a valid XML-file and has therefore a natural
+tree structure. The {\mixer} starts with this tree and recursively
+walks through it, replacing the subtree corresponding to the element
+\verb!<mixer part="main"/>! by the tree defined by \verb!xyz.mixer!.
+Directly after the replacement this tree is walked through and only
+after that is done the walk through the first tree continues.
+
+During these walks various replacements of subtrees are done, which are
+explained in the following sections. As described in section \ref{partsubs}
+for "`part substitution"' other files with names like \verb!xyz.ABC!
+are used, where \verb!ABC! is replaced by the name of the requested
+part.
+
+There are possibilities to insert the value of a variable defined
+in the configuration database, to insert values from the address
+database, to insert other parts or to insert the result of a user
+defined function.
+
+After all these replacements, the resulting tree is written out as
+a valid XHTML document (provided the input was correct) to the file
+\verb!xyz.html!.
+
+The {\mixer} usually only works on those files \verb!xyz.mixer! which
+have a newer modification date than the corresponding file
+\verb!xyz.html!, unless the command line option \verb!-f! for "`force"'
+is used. In the latter case or if any of the template documents is 
+modified more recently, the complete site is rebuilt.
+
+\section{Template documents}
+\label{templatedocs}
+
+Template documents play the role of a common frame for many web pages.
+They are typically ending in \verb!.tmpl! and can reside anywhere
+in the file tree below the {\MIXERROOT}.
+Their format is easily described: A template document
+must be a valid XHTML document, apart from certain additional elements
+of type \verb!mixer!, which are replaced during the work of the {\mixer}
+as described below. However, to make sense, a template document should adhere
+to the following conventions or rules:
+
+A template document should \textbf{not} contain a \verb!DOCTYPE! declaration.
+This is inserted by the {\mixer} before writing out the HTML-files. The 
+reason for this is that with the \verb!mixer! elements it \textbf{is not}
+a valid XHTML document and with the \verb!DOCTYPE! declaration the
+XML parser within the {\mixer} would complain.
+
+A template document must have an element of type \verb!title!, however
+its content does not matter. This is a rule from the XHTML standard.
+
+A template document should contain an old style and a new style declaration
+of a style sheet, as follows (in this order!):
+
+{\small
+\begin{verbatim}
+<link href="/lib/default.css" type="text/css" rel="StyleSheet" />
+<style type="text/css" media="screen">@import url(/lib/default.css);</style>
+\end{verbatim}}
+
+Note that the seemingly absolute links will be replaced by the {\mixer}
+as described in section \ref{links}. Modern browsers will read both
+declarations and the values in the second will take precedence over
+those in the first. Netscape version 4.xx (and probably earlier) will
+not read the second. This is a way to deal with the inherently broken
+implementation of cascading style sheets in netscape version 4.xx. If
+need be, one can easily specify a different stylesheet for netscape
+4.xx.
+
+A template document should somewhere in the body contain an element
+\verb!<mixer part="main"/>!. Otherwise all pages referring to this
+template document will be equal and the main part is not included at all.
+
+The template document used for a certain \verb!.mixer! file is determined
+by the \verb!template! attribute of the top level \verb!mixer! element
+in the \verb!.mixer! file. The attribute value should not contain a path
+but only a filename. This file is searched from the position of the
+\verb!.mixer! file upwards until the {\MIXERROOT} and the first file
+found with this name is taken. If no file is found the {\mixer} also
+searches in {\MIXERROOT}\verb!/lib!.
+
+
+\section{What replacements does the {\mixer} perform?}
+
+During its walk "`through the tree"' (see section \ref{puttogether}), the
+{\mixer} replaces all elements of type \verb!mixer!. Actually it replaces
+the whole subtree below such an element. Therefore with respect to the
+final result it does not matter, whether you write
+
+\hspace*{1cm} \verb!<mixer part="main"/>!
+
+or
+
+\hspace*{1cm} \verb!<mixer part="main">Here will be the main part.</mixer>!
+
+However since most browsers will ignore the \verb!mixer! tags that they
+do not know and display only the text "`Here will be the main part."',
+the second variant has an advantage: You can look at the template document
+with a web browser and will see the place, where later the actual
+content will be placed. This hint of course holds for all replacements
+described in the following sections.
+
+\subsection{Variable substitution}
+
+Any element of type \verb!mixer! having an attribute \verb!var! with
+value \verb!x! is replaced by the value of the variable \verb!x! in 
+the configuration database. 
+
+Example:
+
+\begin{verbatim}
+<mixer var="a"/>
+\end{verbatim}
+
+The configuration database is just
+the file \MIXERROOT\verb!/lib/config!, which must be a Python script
+that only sets some variables to string values. Note that variable
+assignment is done with \verb!=! in Python and that string values have
+to be enclosed in either single or double quotes. If you want to
+define string constants that contain more than one line, you have to
+use either triple quotes. Some examples:
+
+\begin{verbatim}
+a = 'Max'
+b = "Till"
+c = '''Hi
+there!'''
+d = """This even contains single quotes ' and
+multiple lines!"""
+\end{verbatim}
+
+There is a special variable with name \verb!today! which is replaced
+by the result of the C-library function \verb!ctime!. Note that of 
+course this will give you the date of the time when the \verb!mixer!
+ran last!
+
+\subsection{Part substitution}
+\label{partsubs}
+
+Assume the mixer currently works on a file \verb!x.mixer! in some
+directory \verb!dir!.
+
+Any element of type \verb!mixer! having an attribute \verb!part! is replaced
+by a full tree from another file. If the value of the \verb!part! attribute
+is \verb!main!, the tree from \verb!x.mixer! is used.
+If the value is \verb!title!, a special case occurs, which is described
+in the following section. For all other values \verb!y!, the content of 
+the file \verb!x.y! in the directory \verb!dir! is taken.
+
+Example:
+
+\begin{verbatim}
+<mixer part="main"/>
+\end{verbatim}
+
+Note that in all cases the inserted subtree is traversed recursively
+before the rest of the first tree.
+
+
+\subsection{The title of a page}
+
+There is a special case of part substitution, which was already mentioned 
+in the last section, namely if the \verb!part! attribute has the value
+\verb!title!. Very often the title of a page will occur not only in
+the \verb!title! element of the head of the page, but also in some
+heading in the main page. Therefore the following mechanism was invented.
+
+When the main part is read from a \verb!.mixer! file, the top level of
+the corresponding tree is scanned for an element of type \verb!title!.
+If it is found, it is removed in this tree and stored separately.
+Its content is then placed not only into the \verb!title! element
+in the head of the page but also inserted at all places, where an
+element like \verb!<mixer part="title"/>! appears. Note that
+recursive replacement takes place within this title subtree, such
+that for example variables can be used inside.
+
+
+\subsection{Style sheets}
+
+To configure the usage of different stylesheets conveniently some extra
+magic has been implemented in the \mixer. If the top level element
+of a \verb!.mixer! file has an attribute \verb!style!, its value is
+placed into the new style stylesheet declaration of type \verb!style!
+in the head of the document. Likewise, the value of an attribute
+\verb!oldstyle! is placed into the old style stylesheet declaration of
+type \verb!link! (see section \ref{templatedocs}).
+
+\subsection{Links}
+\label{links}
+
+For all links in the trees a convenience procedure is performed. All
+values of \verb!href! attributes are considered to be links. In addition
+the value in the \verb!@import url(...);! statement in the
+\verb!style! element in the head is also considered a link.
+
+First a special form of variable substitution is performed: If the link
+contains constructs in double braces, the text between the braces is
+taken as the name of a variable from the configuration database 
+and the brace expression is substituted by the value of the variable.
+
+Afterwards the link is changed into a relative link in the following way:
+
+If a link contains a colon, it remains untouched, because it is considered
+to be an external link, probably containing \verb!http://! or a similar
+thing.
+
+If a link does not start with a slash, it remains untouched, because it
+is considered to be an internal, relative link "`as is"'.
+
+If a link does not contain a colon and starts with a slash, it is
+considered to be an internal link, which should be relative to the
+current position in the end. It is interpreted as a path relative to
+the {\MIXERROOT} and is changed to a relative link from the current
+position, usually by prepending a certain number of repetitions of
+"`\verb!../!"' for "`go one up"'. 
+
+This last feature is convenient, because one can always refer to other
+documents via their "`absolute"' path with respect to the {\MIXERROOT}
+and gets automatically relative links in the end.
+
+
+\subsection{User defined functions}
+
+If the {\mixer} finds a construct like \verb!<mixer func="xyz"/>!, it
+calls the function \verb!xyz! which must be defined in the file
+\MIXERROOT\verb!/lib/funcs.py! which is interpreted at startup time.
+This function gets five arguments. The first is an absolute path name
+to the \MIXERROOT, which ends in a slash. The second is a path name
+leading from the {\MIXERROOT} to the directory in which the current
+\verb!.mixer! file resides. The third argument is the name of the current
+\verb!.mixer! document without the extension \verb!.mixer!. The fourth
+argument is the complete tree of the main part in the memory representation
+described below. The fifth argument is the current subtree in the same form.
+
+The function
+must return something which can be worked on by the "`walking"' routines
+in the {\mixer}. 
+
+The return value can be a string. In this case it is just put at the place
+of the \verb!mixer! element. If it is a list, all entries in the list
+are inserted instead of the \verb!mixer! element (and therefore are again
+subject to the same requirements).
+
+The return value also can be a full subtree in the memory representation of
+XML-trees within the {\mixer}. This representation works as follows:
+An element is represented by an object in the class \verb!xmltree! which 
+is defined in the module \verb!maxml!. This class has four data entries:
+\verb!type! is a string containing the name of the element. \verb!attr!
+is either \verb!None! or a Python dictionary containing the attributes
+of the object. \verb!subs! is either \verb!None! for an empty element
+or a list of children. Those children can either be strings or subelements
+in the form of objects in the class \verb!xmltree! recursively.
+
+Note the difference between the value \verb!None!
+and an empty list: The first indicates that the element had only
+one opening and closing tag like \verb!<element/>!, the second
+indicates, that it has opening and closing tags, but no children.
+
+The last entry is called \verb!meta! and contains meta data like source
+positions and is not used for further processing.
+
+Note that \verb!mixer! elements with function calls need not be
+empty. User defined functions have access to the subtree via the
+fifth argument.
+
+\subsection{Short form of call to user defined functions}
+
+As convenience for web site authors there is a short form to call
+user defined functions:
+
+\begin{verbatim}
+<mixer myfunc="Argg!"/>
+\end{verbatim}
+
+If in an \verb!mixer! element has exactly one attribute key and this is not 
+among the predefined names described in this section, the \verb!mixer! assumes
+that this attribute key (in the example above "`\verb!myfunc!"') is the name
+of a user defined function, which is called as in the long form described
+in the last subsection.
+
+\section{The address database and its applications}
+
+The address database in the file \MIXERROOT\verb!/lib/addresses! is of
+course again an XML-document. It must consist of a single element
+of type \verb!addresses!, which contains a sequence of elements
+of type \verb!person!. Those latter elements all have to have an
+\verb!id! attribute for identification and may have any other 
+attributes. Standard attributes in use are:
+
+\texttt{name, formalname, title, department, university, building, street, 
+city,}
+
+\texttt{count, zipcode, country, www, email, fax, phone}
+
+If one uses the attribute \verb!sameaddressas! with the
+\verb!id! of another person as value, the address information of the
+other person is copied unless specified otherwise.
+
+The information in the address database can be inserted into web pages
+by using elements like 
+
+  \hspace*{1cm}\verb!<mixer person="xyz" data="abc"/>!
+
+where
+\verb!xyz! must be the \verb!id! of a person in the database and
+\verb!abc! must be an attribute specified for that person.
+
+Note that some additional attributes are generated automatically, if the
+necessary data is available:
+
+\hspace*{1cm}
+\begin{tabular}{lp{4.3in}}
+  \verb!name_link! &
+    for a link to the person's web page which has his name as text of
+    the link.\\
+  \verb!name_link_email! &
+    for the above link together with a clickable email address.\\
+  \verb!email_link! &
+    for a "`mailto:"' link with the email as visible text.\\
+  \verb!title_name! &
+    for the full name with title. \\
+  \verb!address! &
+    for the full address consisting of the following entries, if given:\\
+    & \verb!department!, \verb!university!, \verb!building!, \verb!street!, 
+      \verb!county!, \\
+    & \verb!city!, \verb!zipcode!, \verb!country!. \\
+  \verb!contact! &
+    the address as in \verb!address! plus an email address, if given. \\
+  \verb!name_city! &
+    the name and the city, if both are given, otherwise only the name. \\
+  \verb!name_link_city! &
+    the name linked to the person's web page, and the city, if both are 
+    given, otherwise only the name.
+\end{tabular}
+
+
+\section{Automatic generation of site navigation}
+\label{autonav}
+
+The current distribution of the {\mixer} contains a sample implementation
+of navigation generating functions in \MIXERROOT\verb!/lib/funcs.py!.
+In this approach one assumes that the whole site has a "`spanning tree"',
+which is mirrored in the file system tree. Every node in this tree
+corresponds to web page. Every internal node (i.e. not a leaf) corresponds
+to a directory in the file system and every leaf corresponds to a page
+within the directory of the parent node.
+
+This tree is configured by putting a file with the name \verb!tree! in
+each directory within the web site. Such a \verb!tree! file must be
+a valid XML-file with one top element of type \verb!node!, that has
+an attribute \verb!file! which contains the name of the web page
+corresponding to the node of the tree belonging to this directory.
+The top element contains a sequence of elements of type \verb!entry!
+which declare the children in the tree. Note that the order of the
+entries matters for navigation purposes. Each \verb!entry! node
+has an attribute \verb!file!, the value of which refers to either
+a subdirectory (if the child is not a leaf) or to a file in the
+current directory (if the child is a leaf). The content of the
+\verb!entry! element is the text that should appear in the navigation
+tools.
+
+These are the two functions which generate such navigation tools:
+
+\hspace*{3mm}
+\begin{tabular}{lp{3.5in}}
+  \verb!<mixer func="maketop"/>! &
+  for a function producing a top line with links to the children of
+  the root node \\
+  \verb!<mixer func="makeleft"/>! &
+  for a function producing a vertical bar visualizing the current position
+  in the tree by displaying the current path and the nodes in the
+  vicinity. The idea is that of a bar appearing to the left of the
+  main content by using a table.
+\end{tabular}
+\end{document}

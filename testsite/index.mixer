@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- This is a sample document. -->
+
+<mixer template="defaultframewithleft.tmpl"> 
+<mixertitle>Ein anderer Titel</mixertitle>
+
+<h1><mixer part="title"/></h1>
+
+Text darunter
+
+<mixer part="title"/>
+<mixer func="myfunc"/>
+<mixer person="Max Neunhoeffer" data="name"/>
+<mixer person="Max Neunhoeffer" data="www"/>
+<mixer person="Max Neunhoeffer" data="name_link"/>
+<mixer person="Max Neunhoeffer" data="name_link_email"/>
+<mixer myfunc="hallo"/>
+<mixer manual="Tutorial: The GAP System"/>
+<mixer manual="Tutorial: The GAP System">Mein Text</mixer>
+<![CDATA[Text]]>
+</mixer>

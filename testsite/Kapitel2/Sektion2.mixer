@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<mixer template="defaultframewithleft.tmpl"> 
+<mixertitle>Content under Kapitel 2</mixertitle>
+
+<h1>Inhalt von Kapitel 2 Sektion 2</h1>
+
+Text darunter
+
+</mixer>

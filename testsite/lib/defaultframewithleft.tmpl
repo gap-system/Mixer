@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+
+  <link href="/lib/default.css" type="text/css" rel="StyleSheet" />
+
+  <style type="text/css" media="screen">@import url(/lib/default.css);</style>
+
+  <title><mixer var="title">Here will be the title</mixer></title>
+
+</head>
+
+<body>
+
+<mixer func="maketop">Here will be the top navigation</mixer>
+
+<table>
+ <tr>
+  <td>
+   <mixer func="makeleft_plus">The left bar</mixer>
+  </td>
+  <td>
+   <mixer part="main">Here will be the main part of the page</mixer>
+  </td>
+ </tr>
+ <tr><td colspan="2">Last updated: <mixer var="today"/>
+ <mixer var="source"/></td></tr>
+</table>
+
+</body>
+
+</html>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<node file="index.html">
+ <entry file="Sektion1.html">  Sektion 1 </entry> 
+ <entry file="Sektion2.html">  Sektion 2 </entry> 
+</node>

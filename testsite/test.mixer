@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<mixer template="defaultframewithleft.tmpl"> 
+<mixertitle>Ein Blatt</mixertitle>
+
+<h1>Überschrift</h1>
+
+Ein Blatt
+
+</mixer>

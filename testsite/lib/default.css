@@ -1,0 +1,25 @@
+body { 
+	background-color:#d0f5fe;
+	color:#191970;
+	background-image:url(balken3.gif);
+	font-family: sans-serif, Helvetica, Arial, Geneva;
+	}
+ 
+a:link {
+	color: #2336dd;
+	}
+a:visited {
+	color: #640a99;
+	}
+
+#HR     {
+#	width:50%;
+#       }
+
+a.currentsection {
+  color:#ff0000;
+}
+
+a.deepestchildren {
+  color:#00ff00;
+}

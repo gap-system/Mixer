@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<node file="index.html">
+ <entry file="Kapitel1">   Kapitel I   </entry>
+ <entry file="Kapitel2">   Kapitel II  </entry>
+ <entry file="test.html">  Test-Blatt  </entry> 
+</node>

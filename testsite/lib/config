@@ -1,0 +1,6 @@
+# configuration variables for the mixer:
+
+guck = 123
+title = 'Heiligsblechle!'
+
+GAPManualLink = 'http://www.math.rwth-aachen.de/GAP'

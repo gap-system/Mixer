@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<addresses>
+<person id="Max Neunhoeffer"
+    name       = "Max Neunhöffer"
+    email      = "Max.Neunhoeffer@Math.RWTH-Aachen.DE"
+    www        = "http://www.math.rwth-aachen.de/~Max.Neunhoeffer"
+    department = "Lehrstuhl D für Mathematik"
+    university = "RWTH Aachen"
+    street     = "Templergraben 64"
+    city       = "Aachen"
+    zipcode    = "52062"
+    country    = "Germany"
+    title      = "Dr."
+    initial    = "Q."
+/>
+<person id="Frank Luebeck"
+    name       = "Frank Lübeck"
+    email      = "Frank.Luebeck@Math.RWTH-Aachen.DE"
+    www        = "http://www.math.rwth-aachen.de/~Frank.Luebeck"
+    sameaddressas = "Max Neunhoeffer"
+/>
+</addresses>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- This is a sample document. -->
+
+<mixer template="defaultframewithleft.tmpl"> 
+<mixertitle>Kapitel II</mixertitle>
+
+<h1>Überschrift von Kapitel II</h1>
+
+Text darunter
+
+</mixer>
