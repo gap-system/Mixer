@@ -20,4 +20,6 @@ Text darunter
 <mixer manual="Tutorial: The GAP System"/>
 <mixer manual="Tutorial: The GAP System">Mein Text</mixer>
 <![CDATA[Text]]>
+Last modified: <mixer var="timestamp"/>
+Mixerlauf: <mixer var="today"/>
 </mixer>

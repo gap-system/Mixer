@@ -417,9 +417,14 @@ multiple lines!"""
 \end{verbatim}
 
 There is a special variable with name \verb!today! which is replaced
-by the result of the C-library function \verb!ctime!. Note that of 
+by the result of the C-library function \verb!ctime!.  Note that of 
 course this will give you the date of the time when the \verb!mixer!
 ran last!
+
+Another special variable with name \verb!timestamp! is replaced with
+the output of \verb!ctime!, called with the modification time of the
+\verb!.mixer! file of the main part.
+
 
 \subsection{Part substitution}
 \label{partsubs}

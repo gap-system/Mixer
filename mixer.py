@@ -107,6 +107,9 @@ def workerfunc(path,filename):
         elif a.has_key('var'):
             if a['var'] == 'source':
                 out.write('<a href="'+path+filename+'.mixer">MIXERFILE</a>')
+            elif a['var'] == 'timestamp':
+                out.write(time.ctime(
+                          os.stat(MIXERROOT+path+filename+'.mixer').st_mtime))
             elif config.has_key(a['var']):
                 out.write(config[a['var']])
             else:
