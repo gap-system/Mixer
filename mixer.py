@@ -258,6 +258,24 @@ def workerfunc(path,filename):
             # we make it relative:
             href = make_link_relative(href)
 
+        # now adjust a possible 'src' attribute in case of an internal link:
+        if node.attr != None and node.attr.has_key('src'):
+            src = node.attr['src']
+            done = 0
+            while not(done):
+                done = 1
+                ps = src.find('{{')
+                pe = src.find('}}')
+                if ps >= 0 and pe >= 0 and pe > ps:
+                    varname = src[ps+2:pe]
+                    if config.has_key(varname):
+                        src = src[:ps] + config[varname] + src[pe+2:]
+                        done = 0  # possibly more to replace
+                    else:
+                        err.write("Warning: Variable undefined: "+varname+"\n")
+            # we make it relative:
+            src = make_link_relative(src)
+
         # throw it away if language is set and not the current one:
         if currentlang != '' and node.attr != None:
             if node.attr.has_key('xml:lang'): l = node.attr['xml:lang']
@@ -271,6 +289,8 @@ def workerfunc(path,filename):
             for k in node.attr: 
                 if k == 'href':
                     out.write(' href="'+href+'"')
+		elif k == 'src':
+                    out.write(' src="'+src+'"')
                 else:
                     out.write(' '+k+'="'+node.attr[k]+'"')
         if replacement == 0 and node.subs == None:   # is it empty?
