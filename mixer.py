@@ -26,14 +26,6 @@ if startdir[:len(MIXERROOT)] != MIXERROOT:
     err.write("       Current dir: "+startdir+"\n")
     err.write("       MIXERROOT  : "+MIXERROOT+"\n")
 
-# Now we add the lib directory to our Python path and import user funcs:
-sys.path.insert(0,MIXERLIB)
-print "Importing user functions..."
-import funcs
-
-# Call the user initialization function:
-funcs.init(MIXERROOT)
-
 # Now some primitive command line processing:
 force = 0
 nodoctype = 0
@@ -41,7 +33,15 @@ quiet = 0
 for a in sys.argv[1:]:
     if a == '-f': force = 1
     if a == '-n': nodoctype = 1
-    if a == '-q': quiet = 1
+    if a == '-q': quiet += 1
+
+# Now we add the lib directory to our Python path and import user funcs:
+sys.path.insert(0,MIXERLIB)
+if quiet < 2: print "Importing user functions..."
+import funcs
+
+# Call the user initialization function:
+funcs.init(MIXERROOT)
 
 
 def search_up(MIXERROOT,path,filename):
@@ -344,14 +344,18 @@ def workerfunc(path,filename):
         writeoutdoc(template,out)
         out.write('\n<!-- Created by mixer. -->\n')
         out.close()
+        if quiet == 1:
+            print "Updated",MIXERROOT+path+filename+".html"
     else:
-        if not quiet: print "Nothing to be done."
+        if quiet == 0: print "Nothing to be done."
 
-print 'Starting directory:'+startdir
-print 'MIXERROOT         :'+MIXERROOT
-print 'MIXERLIB          :'+MIXERLIB
+if quiet < 2:
+    print 'Starting directory:'+startdir
+    print 'MIXERROOT         :'+MIXERROOT
+    print 'MIXERLIB          :'+MIXERLIB
 
-print 'Reading configuration...'
+    print 'Reading configuration...'
+
 config = {}
 execfile(MIXERLIB+'config',config)
 config['today'] = time.ctime()
@@ -360,7 +364,8 @@ config['today'] = time.ctime()
 try: config.update(funcs.config)
 except: pass   # we ignore if there is no funcs.config
 
-print 'Reading addresses...'
+if quiet < 2:
+    print 'Reading addresses...'
 addresses = maxml.parse_file(MIXERLIB+'addresses')
 if addresses.type != 'addresses':
     err.write("Error: Address database has no top element <addresses>!\n")
@@ -389,7 +394,7 @@ def walker(arg,dirname,files):
         sys.exit(7)
     for f in files:
         if f[-6:] == ".mixer":
-            if not quiet: print 'Processing:'+dirname+f
+            if quiet == 0: print 'Processing:'+dirname+f
             workerfunc(dirname[l:],f[:-6])
 
 os.path.walk(MIXERROOT,walker,None)
