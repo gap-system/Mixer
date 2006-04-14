@@ -1,2 +1,4 @@
 Make-Funktionalitaet besser
   Problem: Erst nach dem Parsen kann man sehen, ob was getan werden muss.
+
+Document -n and -q switches.

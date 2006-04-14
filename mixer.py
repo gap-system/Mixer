@@ -37,9 +37,11 @@ funcs.init(MIXERROOT)
 # Now some primitive command line processing:
 force = 0
 nodoctype = 0
+quiet = 0
 for a in sys.argv[1:]:
     if a == '-f': force = 1
     if a == '-n': nodoctype = 1
+    if a == '-q': quiet = 1
 
 
 def search_up(MIXERROOT,path,filename):
@@ -343,7 +345,7 @@ def workerfunc(path,filename):
         out.write('\n<!-- Created by mixer. -->\n')
         out.close()
     else:
-        print "Nothing to be done."
+        if not quiet: print "Nothing to be done."
 
 print 'Starting directory:'+startdir
 print 'MIXERROOT         :'+MIXERROOT
@@ -387,7 +389,7 @@ def walker(arg,dirname,files):
         sys.exit(7)
     for f in files:
         if f[-6:] == ".mixer":
-            print 'Processing:'+dirname+f
+            if not quiet: print 'Processing:'+dirname+f
             workerfunc(dirname[l:],f[:-6])
 
 os.path.walk(MIXERROOT,walker,None)
