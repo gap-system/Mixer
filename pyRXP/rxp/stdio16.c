@@ -204,6 +204,7 @@ static int ConvertASCII(const char8 *buf, int count, FILE16 *file)
     case CE_ISO_8859_7:
     case CE_ISO_8859_8:
     case CE_ISO_8859_9:
+	case CE_CP_1252:
     case CE_unspecified_ascii_superset:
 	if(file->flags & FILE16_crlf)
 	{
@@ -311,6 +312,7 @@ static int ConvertUTF16(const char16 *buf, int count, FILE16 *file)
     case CE_ISO_8859_7:
     case CE_ISO_8859_8:
     case CE_ISO_8859_9:
+	case CE_CP_1252:
 	tablenum = (file->enc - CE_ISO_8859_2);
 	max = iso_max_val[tablenum];
 	from_unicode = unicode_to_iso[tablenum];
@@ -630,7 +632,7 @@ int Vfprintf(FILE16 *file, const char *format, va_list args)
     char16 cbuf[1];
 #endif
     int mflag, pflag, sflag, hflag, zflag;
-    int l, h, L;
+    int l, h, L, ll;
     int nchars = 0;
 
     while((c = *format++))
@@ -645,7 +647,7 @@ int Vfprintf(FILE16 *file, const char *format, va_list args)
 	width = 0;
 	prec = -1;
 	mflag=0, pflag=0, sflag=0, hflag=0, zflag=0;
-	l=0, h=0, L=0;
+	l=0, h=0, L=0, ll=0;
 
 	while(1)
 	{
@@ -707,6 +709,14 @@ int Vfprintf(FILE16 *file, const char *format, va_list args)
 	case 'l':
 	    l = 1;
 	    c = *format++;
+#ifdef HAVE_LONG_LONG
+	    if(c == 'l')
+	    {
+		l = 0;
+		ll = 1;
+		c = *format++;
+	    }
+#endif
 	    break;
 	case 'h':
 	    h = 1;
@@ -747,6 +757,10 @@ int Vfprintf(FILE16 *file, const char *format, va_list args)
 		sprintf(val, fmt, va_arg(args, int)); /* promoted to int */
 	    else if(l)
 		sprintf(val, fmt, va_arg(args, long));
+#if	HAVE_LONG_LONG
+	    else if(ll)
+		sprintf(val, fmt, va_arg(args, PY_LONG_LONG));
+#endif
 	    else
 		sprintf(val, fmt, va_arg(args, int));
 	    for(p=val; *p; p++)
@@ -805,12 +819,11 @@ int Vfprintf(FILE16 *file, const char *format, va_list args)
 		    return -1;
 		count = 0;
 		nchars += n;
-		while(n > 0)
+		for(i = n; i > 0; i -= BufferSize)
 		{
 		    /* ConvertUTF16 can only handle <= BufferSize chars */
-		    if(ConvertUTF16(q, n > BufferSize ? BufferSize : n, file) == -1)
+		    if(ConvertUTF16(q, i > BufferSize ? BufferSize : i, file) == -1)
 			return -1;
-		    n -= BufferSize;
 		    q += BufferSize;
 		}
 	    }

@@ -1,27 +1,17 @@
 /****************************************************************************
-#copyright ReportLab Inc. 2000
+#Copyright ReportLab Europe Ltd. 2000-2004
 #see license.txt for license details
-#history http://cvs.sourceforge.net/cgi-bin/cvsweb.cgi/rl_addons/pyRXP/pyRXP.c?cvsroot=reportlab
-#$Header$
+#history http://www.reportlab.co.uk/cgi-bin/viewcvs.cgi/public/reportlab/trunk/rl_addons/pyRXP/pyRXP.c
  ****************************************************************************/
-static char* __version__=" $Id$ ";
+#define svnId " $Id$ "
 #include <Python.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
+#include "system.h"
 #if !defined(CHAR_SIZE)
 #	error CHAR_SIZE not specified
-#elif CHAR_SIZE == 16
-#	define initpyRXP initpyRXPU
-#	define MODULE "pyRXPU"
-#elif CHAR_SIZE == 8
-#	define PYSTRING(s) PyString_FromString(s)
-#	define MODULE "pyRXP"
-#	define initpyRXP initpyRXP
 #endif
-
-#include "system.h"
 #include "ctype16.h"
 #include "charset.h"
 #include "string16.h"
@@ -31,24 +21,68 @@ static char* __version__=" $Id$ ";
 #include "stdio16.h"
 #include "version.h"
 #include "namespaces.h"
-#define VERSION "0.98"
+#define VERSION "1.11"
 #define MAX_DEPTH 256
 
 #if CHAR_SIZE==16
-PyObject* PYSTRING(const Char* s)
+#	define initpyRXP initpyRXPU
+#	define MODULE "pyRXPU"
+#	define UTF8DECL ,int utf8
+#	define UTF8PASS ,utf8
+#	define PYNSNAME(nsed, name) PyNSName(nsed,name,utf8)
+PyObject* _PYSTRING(const Char* s, int utf8)
 {
-	return PyUnicode_Decode((const char*)s, (int)Strlen(s)*2, "utf16", NULL);
+	int	lens = (int)Strlen(s);
+#if defined(Py_UNICODE_WIDE)
+	PyObject *u, *x;
+	u = PyUnicode_DecodeUTF16((char*)s,2*lens,NULL,NULL);
+	if(!utf8 || !u) return u;
+	x = PyUnicode_AsUTF8String(u);
+	Py_DECREF(u);
+	return x;
+#else
+	return utf8 ? PyUnicode_EncodeUTF8((Py_UNICODE*)s, lens, NULL)
+				: PyUnicode_FromUnicode((Py_UNICODE*)s, lens);
+#endif
 }
+#	define PYSTRING(s) _PYSTRING(s,utf8)
 PyObject* PYSTRING8(const char* s)
 {
 	return PyUnicode_DecodeUTF8((const char*)s, (int)strlen(s), NULL);
 }
 #	define EmptyCharStr (Char*)"\0"
+#	define FMTCHAR "u"
 #else
+#	define MODULE "pyRXP"
+#	define initpyRXP initpyRXP
+#	define UTF8DECL
+#	define UTF8PASS
+#	define PYNSNAME(nsed, name) PyNSName(nsed,name)
 #	define PYSTRING(s) PyString_FromString(s)
 #	define PYSTRING8(s) PyString_FromString(s)
 #	define EmptyCharStr (Char*)""
+#	define FMTCHAR "s"
 #endif
+PyObject* PyNSName(NSElementDefinition nsed, const Char *name UTF8DECL){
+	Char		*t, *ns;
+	Namespace	NS;
+	static Char braces[]={'{','}',0};
+	int			lns;
+	PyObject*	r;
+	if(nsed && (NS=nsed->RXP_NAMESPACE) && (ns=NS->nsname) && (lns=(int)Strlen(ns))){
+		t = Strchr(name,':');
+		if(t) name=t+1;
+		t = (Char*)Malloc((lns+Strlen(name)+3)*sizeof(Char));
+		Strncpy(t,braces,1);
+		Strncpy(t+1,ns,lns);
+		Strncpy(t+lns+1,braces+1,1);
+		Strcpy(t+lns+2,name);
+		}
+	else t = (Char*)name;
+	r = PYSTRING(t);
+	if(t!=name) Free(t);
+	return r;
+	}
 static PyObject *moduleError;
 static PyObject *moduleVersion;
 static PyObject *RXPVersion;
@@ -59,7 +93,7 @@ static PyObject *recordLocation;
 static PyObject *parser_flags;
 static char *moduleDoc =
 "\n\
-This is pyRXP a python wrapper for RXP, a validating namespace-aware XML parser\n\
+This is " MODULE " a python wrapper for RXP, a validating namespace-aware XML parser\n\
 in C.\n\
 \n\
 RXP was written by Richard Tobin at the Language Technology Group,\n\
@@ -80,6 +114,7 @@ The python module exports the following\n\
     version         the string version of the module\n\
     RXPVersion      the version string of the rxp library\n\
                     embedded in the module\n\
+	_svnId			svn $Id$\n\
     parser_flags    a dictionary of parser flags\n\
                     the values are the defaults for parsers\n\
     piTagName       special tagname used for processing instructions\n\
@@ -115,7 +150,9 @@ The python module exports the following\n\
         eoCB    argument should be None or a callable method with\n\
             a single argument. This method will be called when external\n\
             entities are opened. The method should return a possibly\n\
-            modified URI.\n\
+            modified URI or a tuple containing a tuple (URI,'text...') to allow\
+			the content itself to be returned. The possibly changed URI\
+			is required.\
 \n""\
         fourth  argument should be None (default) or a callable method with\n\
             no arguments. If callable, will be called to get or generate the\n\
@@ -195,7 +232,9 @@ The python module exports the following\n\
         XMLNamespaces = 0\n\
             If this is on, the parser processes namespace declarations (see\n\
             below).  Namespace declarations are *not* returned as part of the list\n\
-            of attributes on an element.\n\
+            of attributes on an element. The namespace value will be prepended to names\n\
+			in the manner suggested by James Clark ie if xmlns:foo='foovalue'\n\
+			is active then foo:name-->{fovalue}name.\n\
         NoNoDTDWarning = 1\n\
             Usually, if Validate is set, the parser will produce a warning if the\n\
             document has no DTD.  This flag suppresses the warning (useful if you\n\
@@ -217,7 +256,18 @@ The python module exports the following\n\
             If this is on, the parser returns for each CDATA section a tuple\n\
             with name field equal to CDATATagName containing a single string\n\
             in its third field that is the CDATA section.\n\
-";
+        XML11CheckNF = 0\n\
+            If this is set the parser will check for unicode normalization and\n\
+            is only relevant with XML 1.1 documents.\n\
+        XML11CheckExists = 0\n\
+            Controls whether unknown characters are present. It is only effective\n\
+            when XML11CheckNF is set and the document is XML 1.1.\n"
+#if	CHAR_SIZE==16
+"        ReturnUTF8 = 0\n\
+            Return UTF8 encoded strings rather than the default unicode\n"
+
+#endif
+;
 
 /*alter the integer values to change the module defaults*/
 static struct {char* k;long v;} flag_vals[]={
@@ -255,18 +305,27 @@ static struct {char* k;long v;} flag_vals[]={
 	{"RelaxedAny",0},
 	{"ReturnNamespaceAttributes",0},
 	{"ProcessDTD",0},
+	{"XML11Syntax",0},
+	{"XML11CheckNF",0},
+	{"XML11CheckExists",0},
 	{"ReturnList",0},
 	{"ExpandEmpty",0},
 	{"MakeMutableTree",0},
 	{"ReturnProcessingInstructions",0},
 	{"ReturnCDATASectionsAsTuples",0},
+#if	CHAR_SIZE==16
+	{"ReturnUTF8",0},
+#endif
 	{0}};
-#define LASTRXPFLAG ProcessDTD
+#define LASTRXPFLAG XML11CheckExists
 #define ReturnList (ParserFlag)(1+(int)LASTRXPFLAG)
 #define ExpandEmpty (ParserFlag)(1+(int)ReturnList)
 #define MakeMutableTree (ParserFlag)(1+(int)ExpandEmpty)
 #define ReturnProcessingInstructions (ParserFlag)(1+(int)MakeMutableTree )
 #define ReturnCDATASectionsAsTuples (ParserFlag)(1+(int)ReturnProcessingInstructions)
+#if	CHAR_SIZE==16
+#define ReturnUTF8 (ParserFlag)(1+(int)ReturnCDATASectionsAsTuples)
+#endif
 #define __GetFlag(p, flag) \
   ((((flag) < 32) ? ((p)->flags[0] & (1u << (flag))) : ((p)->flags[1] & (1u << ((flag)-32))))!=0)
 #ifdef	_DEBUG
@@ -284,6 +343,9 @@ typedef	struct {
 		int			(*SetItem)(PyObject*, int, PyObject*);
 		PyObject*	(*GetItem)(PyObject*, int);
 		int			none_on_empty;
+#if	CHAR_SIZE==16
+		int			utf8;
+#endif
 		} ParserDetails;
 
 #define PDGetItem pd->GetItem
@@ -292,6 +354,9 @@ typedef	struct {
 static	PyObject* get_attrs(ParserDetails* pd, Attribute a)
 {
 	int		useNone = pd->none_on_empty && !a;
+#if	CHAR_SIZE==16
+	int		utf8 = pd->utf8;
+#endif
 
 	if(!useNone){
 		PyObject *attrs=PyDict_New(), *t, *s;
@@ -300,8 +365,8 @@ static	PyObject* get_attrs(ParserDetails* pd, Attribute a)
 				t=PYSTRING((Char*)a->definition->name),
 				s=PYSTRING((Char*)a->value)
 				);
-			Py_DECREF(t);
-			Py_DECREF(s);
+			Py_XDECREF(t);
+			Py_XDECREF(s);
 			}
 		return attrs;
 		}
@@ -373,6 +438,9 @@ static	PyObject* _makeNode(ParserDetails* pd, PyObject *pyName, PyObject* attr, 
 
 static	PyObject* makeNode(ParserDetails* pd, const Char *name, PyObject* attr, int empty)
 {
+#if	CHAR_SIZE==16
+	int		utf8 = pd->utf8;
+#endif
 	return _makeNode(pd, PYSTRING(name), attr, empty);
 }
 
@@ -388,7 +456,10 @@ static	int handle_bit(Parser p, XBit bit, PyObject *stack[],int *depth)
 {
 	int	r = 0, empty;
 	PyObject	*t, *s;
-	ParserDetails*	pd = (ParserDetails*)(p->callback_arg);
+	ParserDetails*	pd = (ParserDetails*)(p->warning_callback_arg);
+#if	CHAR_SIZE==16
+	int		utf8 = pd->utf8;
+#endif
 	switch(bit->type) {
 		case XBIT_eof: break;
 		case XBIT_error:
@@ -404,8 +475,12 @@ static	int handle_bit(Parser p, XBit bit, PyObject *stack[],int *depth)
 				}
 
 			empty = bit->type == XBIT_empty;
-			t = makeNode( pd, bit->element_definition->name,
-					get_attrs(pd, bit->attributes), empty);
+			t = ParserGetFlag(p, XMLNamespaces) ?
+					_makeNode( pd, PYNSNAME(bit->ns_element_definition, bit->element_definition->name),
+						get_attrs(pd, bit->attributes), empty)
+					:
+					makeNode( pd, bit->element_definition->name,
+						get_attrs(pd, bit->attributes), empty);
 			if(empty){
 				PyList_Append(PDGetItem(stack[*depth],2),t);
 				Py_DECREF(t);
@@ -434,13 +509,13 @@ static	int handle_bit(Parser p, XBit bit, PyObject *stack[],int *depth)
 			if(ParserGetFlag(p,ReturnProcessingInstructions)){
 				s = PyDict_New();
 				PyDict_SetItemString(s, "name", t=PYSTRING(bit->pi_name));
-				Py_DECREF(t);
+				Py_XDECREF(t);
 				t = _makeNodePD( pd, piTagName, s, 0);
 				if(pd->fourth==recordLocation) _reverseSrcInfoTuple(PyTuple_GET_ITEM(t,3));
 				Py_INCREF(piTagName);
 				s = PYSTRING(bit->pi_chars);
 				PyList_Append(PDGetItem(t,2),s);
-				Py_DECREF(s);
+				Py_XDECREF(s);
 				PyList_Append(PDGetItem(stack[*depth],2),t);
 				Py_DECREF(t);
 				}
@@ -448,7 +523,7 @@ static	int handle_bit(Parser p, XBit bit, PyObject *stack[],int *depth)
 		case XBIT_pcdata:
 			t = PYSTRING(bit->pcdata_chars);
 			PyList_Append(PDGetItem(stack[*depth],2),t);
-			Py_DECREF(t);
+			Py_XDECREF(t);
 			break;
 		case XBIT_cdsect:
 			if(ParserGetFlag(p,ReturnCDATASectionsAsTuples)){
@@ -458,14 +533,14 @@ static	int handle_bit(Parser p, XBit bit, PyObject *stack[],int *depth)
 				Py_INCREF(Py_None);
 				s = PYSTRING(bit->cdsect_chars);
 				PyList_Append(PDGetItem(t,2),s);
-				Py_DECREF(s);
+				Py_XDECREF(s);
 				PyList_Append(PDGetItem(stack[*depth],2),t);
 				Py_DECREF(t);
 				}
 			else {
 				t = PYSTRING(bit->cdsect_chars);
 				PyList_Append(PDGetItem(stack[*depth],2),t);
-				Py_DECREF(t);
+				Py_XDECREF(t);
 				}
 			break;
 		case XBIT_dtd:
@@ -478,7 +553,7 @@ static	int handle_bit(Parser p, XBit bit, PyObject *stack[],int *depth)
 				Py_INCREF(commentTagName);
 				s = PYSTRING(bit->comment_chars);
 				PyList_Append(PDGetItem(t,2),s);
-				Py_DECREF(s);
+				Py_XDECREF(s);
 				PyList_Append(PDGetItem(stack[*depth],2),t);
 				Py_DECREF(t);
 				}
@@ -496,7 +571,7 @@ static	int handle_bit(Parser p, XBit bit, PyObject *stack[],int *depth)
 static InputSource entity_open(Entity e, void *info)
 {
 	ParserDetails*	pd = (ParserDetails*)info;
-	PyObject	*eoCB = pd->eoCB;
+	PyObject	*eoCB = pd->eoCB, *text=NULL;
 
 	if(e->type==ET_external){
 		PyObject		*arglist;
@@ -504,13 +579,21 @@ static InputSource entity_open(Entity e, void *info)
 		arglist = Py_BuildValue("(s)",e->systemid);	/*NB 8 bit*/
 		result = PyEval_CallObject(eoCB, arglist);
 		if(result){
-			if(PyString_Check(result)){
+			int isTuple=0;
+			if(PyString_Check(result)||(isTuple=PyTuple_Check(result))){
 				int	i;
 				PyObject_Cmp(PyTuple_GET_ITEM(arglist,0),result,&i);
 				if(i){
 					/*not the same*/
-					Free((void*)(e->systemid));
-					e->systemid = strdup8(PyString_AS_STRING(result));
+					CFree((void *)e->systemid);
+					if(isTuple){
+						e->systemid = strdup8(PyString_AS_STRING(PyTuple_GET_ITEM(result,0)));
+						text = PyTuple_GET_ITEM(result,1);
+						Py_INCREF(text);
+						}
+					else{
+						e->systemid = strdup8(PyString_AS_STRING(result));
+						}
 					}
 				}
 			Py_DECREF(result);
@@ -520,7 +603,17 @@ static InputSource entity_open(Entity e, void *info)
 			}
 		Py_DECREF(arglist);
 		}
-	return EntityOpen(e);
+	if(text){
+		int textlen = PyString_Size(text);
+		char *buf = Malloc(textlen);
+		FILE16 *f16;
+		memcpy(buf,PyString_AS_STRING(text),textlen);
+		f16 = MakeFILE16FromString(buf, textlen, "r");
+		Py_DECREF(text);
+		if(!e->base_url) EntitySetBaseURL(e,e->systemid);
+    	return NewInputSource(e, f16);
+		}
+	else return EntityOpen(e);
 }
 
 void PyErr_FromStderr(Parser p, char *msg){
@@ -559,9 +652,9 @@ PyObject *ProcessSource(Parser p, InputSource source)
 {
 	XBit		bit=0;
 	int			r, depth, i;
-	PyObject	*stack[MAX_DEPTH];
+	PyObject	*stack[MAX_DEPTH+1];
 	PyObject	*retVal = 0;
-	ParserDetails*	pd = (ParserDetails*)(p->callback_arg);
+	ParserDetails*	pd = (ParserDetails*)(p->warning_callback_arg);
 
 	if(ParserPush(p, source) == -1) {
 		PyErr_FromStderr(p,"Internal error, ParserPush failed!");
@@ -626,8 +719,16 @@ static void myWarnCB(XBit bit, void *info)
 	str = MakeFILE16FromString(buf,sizeof(buf)-1,"w");
 	_ParserPerror(str, pd->p, bit);
 	Fclose(str);
-	/* TODO: This probably needs to be unicode as well */
-	arglist = Py_BuildValue("(s)",buf);
+#if	CHAR_SIZE==16
+	{
+	struct _FILE16 {
+		void *handle;
+		int handle2, handle3;
+		};
+	buf[((struct _FILE16*)str)->handle2] = 0;
+	}
+#endif
+	arglist = Py_BuildValue("(" FMTCHAR ")",buf);
 	result = PyEval_CallObject(pd->warnCB, arglist);
 	Py_DECREF(arglist);
 	if(result){
@@ -729,6 +830,7 @@ static PyObject* pyRXPParser_parse(pyRXPParserObject* xself, PyObject* args, PyO
 	char		errBuf[512];
 	ParserDetails	CB;
 	Parser		p;
+	Entity		e;
 	pyRXPParserObject	dummy = *xself;
 	pyRXPParserObject*	self = &dummy;
 	if(self->warnCB) Py_INCREF(self->warnCB);
@@ -756,14 +858,20 @@ static PyObject* pyRXPParser_parse(pyRXPParserObject* xself, PyObject* args, PyO
 
 	p = NewParser();
 	CB.p = p;
-	ParserSetCallbackArg(p, &CB);
+	ParserSetWarningCallbackArg(p, &CB);
 	p->flags[0] = self->flags[0];
 	p->flags[1] = self->flags[1];
 	if((self->warnCB && self->warnCB!=Py_None) || (self->eoCB && self->eoCB!=Py_None)){
 		if(self->warnCB && self->warnCB!=Py_None) ParserSetWarningCallback(p, myWarnCB);
-		if(self->eoCB && self->eoCB!=Py_None) ParserSetEntityOpener(p, entity_open);
+		if(self->eoCB && self->eoCB!=Py_None){
+			ParserSetEntityOpener(p, entity_open);
+			ParserSetEntityOpenerArg(p, &CB);
+			}
 		}
 	CB.none_on_empty = !__GetFlag(self,ExpandEmpty);
+#if	CHAR_SIZE==16
+	CB.utf8 = __GetFlag(self,ReturnUTF8);
+#endif
 	if(__GetFlag(self,MakeMutableTree)){
 		CB.Node_New = PyList_New;
 		CB.SetItem = PyList_SetItem;
@@ -783,10 +891,11 @@ static PyObject* pyRXPParser_parse(pyRXPParserObject* xself, PyObject* args, PyO
 	f = MakeFILE16FromString(src,srcLen,"r");
 	source = SourceFromFILE16(PyString_AsString(self->srcName),f);
 	retVal = ProcessSource(p,source);
-	FreeEntity(source->entity);
+	e = source->entity; /*used during FreeParser closing source!*/
 	Fclose(Stderr);
 	FreeDtd(p->dtd);
 	FreeParser(p);
+	FreeEntity(e);
 	deinit_parser();
 L_1:
 	Py_XDECREF(self->warnCB);
@@ -842,7 +951,7 @@ static void pyRXPParserFree(pyRXPParserObject* self)
 	/*this could be called if we're never going to use the parser again*/
 	deinit_parser();
 #endif
-	PyMem_DEL(self);
+	PyObject_DEL(self);
 }
 
 static PyTypeObject pyRXPParserType = {
@@ -878,8 +987,7 @@ static pyRXPParserObject* pyRXPParser(PyObject* module, PyObject* args, PyObject
 
 	if(!PyArg_ParseTuple(args, ":Parser")) return NULL;
 	if(!(self = PyObject_NEW(pyRXPParserObject, &pyRXPParserType))) return NULL;
-        self->srcName = NULL;
-	self->warnCB = self->eoCB = self->fourth = NULL;
+	self->warnCB = self->eoCB = self->fourth = self->srcName = NULL;
 	if(!(self->srcName=PyString_FromString("[unknown]"))){
 		PyErr_SetString(moduleError,"Internal error, memory limit reached!");
 Lfree:	pyRXPParserFree(self);
@@ -924,11 +1032,12 @@ DL_EXPORT(void) initpyRXP(void)
 
 	/* Add some symbolic constants to the module */
 	d = PyModule_GetDict(m);
+	PyDict_SetItemString(d, "_svnId", PyString_FromString(svnId));
 	moduleVersion = PyString_FromString(VERSION);
 	PyDict_SetItemString(d, "version", moduleVersion );
 	RXPVersion = PyString_FromString(rxp_version_string);
 	PyDict_SetItemString(d, "RXPVersion", RXPVersion );
-	moduleError = PyErr_NewException(MODULE ".Error",NULL,NULL);
+	moduleError = PyErr_NewException(MODULE ".error",NULL,NULL);
 	PyDict_SetItemString(d,"error",moduleError);
 	piTagName = PYSTRING8("<?");
 	PyDict_SetItemString(d, "piTagName", piTagName );
