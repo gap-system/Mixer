@@ -75,8 +75,6 @@ static FILE16 *file_open(const char *url,
 static void parse_url(const char *url, 
 		      char **scheme, char **host, int *port, char **path);
 
-static int hexval(int hex);
-
 /* Mapping of scheme names to opening functions */
 
 struct {
@@ -133,10 +131,27 @@ char *default_base_url(void)
     sprintf(url, "file:///%s/", buf);
 
 #else
-#ifdef __CYGWIN__
+#ifdef mac_filenames
 
-    /* Cygwin: translate //c/a/b or /cygdrive/c/a/b to file:///c:/a/b */
+    /* Mac: translate a:b to file:///a/b/ */
+    /* XXX should escape spaces and slashes, at least */
+    {
+	char *p;
+	for(p=buf; *p; p++)
+	    if(*p == ':')
+		*p = '/';
 
+	if(buf[len-1] == '/')
+	    /* often (always?) has trailing separator */
+	    buf[--len] = 0;
+    }
+    url = Malloc(8 + len + 2);
+    sprintf(url, "file:///%s/", buf);
+
+#else
+#ifdef CYGNUS32
+
+    /* Cygnus: translate //c/a/b to file:///c:/a/b  */
 
     if(buf[len-1] == '/')
 	/* should only happen for root directory */
@@ -145,13 +160,8 @@ char *default_base_url(void)
     url = Malloc(8 + len + 2);
     if(buf[0] == '/' && buf[1] == '/')
 	sprintf(url, "file:///%c:%s/", buf[2], buf+3);
-    else if(strncmp(buf, "/cygdrive/", 10) == 0 && buf[10] && buf[11] == '/')
-	sprintf(url, "file:///%c:%s/", buf[10], buf+11);
     else
 	sprintf(url, "file://%s/", buf);
-#if 0
-    printf("translated %s to %s\n",buf,url);
-#endif
 #else
 
     /* Unix: translate /a/b to file:///a/b/ */
@@ -163,6 +173,7 @@ char *default_base_url(void)
     url = Malloc(7 + len + 2);
     sprintf(url, "file://%s/", buf);
 
+#endif
 #endif
 #endif
 
@@ -468,68 +479,65 @@ static FILE16 *file_open(const char *url,
 {
     FILE *f;
     FILE16 *f16;
-    const char *p;
-    char *file, *q;
-    
-    file = malloc(strlen(path) + 16 + 1); /* 16 for cygdrive and similar */
-    p = path;
-    q = file;
+    char *file;
+
+    if(host && host[0])
+	WARN1(LEFILE, "Warning: ignoring host part in file URL \"%s\"\n", url);
 
 #if defined(WIN32) && ! defined(__CYGWIN__)
-    /* DOS: if name starts /X: skip the slash */
-    if(path[0] == '/'&& ((path[1] && path[2] == ':')||(path[1]=='/'&&path[2]=='/')))
-	p++;
-#endif
 
-#ifdef __CYGWIN__
-    /* Cygwin: translate /c: to /cygdrive/c */
+    /* DOS: translate /C:/a/b.c to C:\a\b.c */
+
+    if(path[0] == '/' && path[1] && path[2] == ':')
+	path++;
+
+    file = strdup8(path);
+    {
+	char *p;
+	for(p=file; *p; p++)
+	    if(*p == '/')
+		*p = '\\';
+    }
+
+#else
+#ifdef mac_filenames
+
+    /* Mac: translate /a/b.c to a:b.c */
+
+    if(*path == '/')
+	path++;
+
+    file = strdup8(path);
+    {
+	char *p;
+	for(p=file; *p; p++)
+	    if(*p == '/')
+		*p = ':';
+    }
+#else
+#ifdef CYGNUS32
+
+    /* Cygnus: translate /c:/a/b.c to //c/a/b.c */
+
+    file = strdup8(path);
 
     if(path[0] == '/' && path[1] && path[2] == ':')
     {
-	strcpy(q, "/cygdrive/");
-	q += strlen(q);
-	*q++ = path[1];
-	p += 3;
-    }
-#endif
-
-    for(; *p; p++)
-    {
-#if defined(WIN32) && ! defined(__CYGWIN__)
-	/* DOS: translate slashes */
-	if(*p == '/')
-	{
-	    *q++ = '\\';
-	    continue;
-	}
-#endif
-
-	/* We just convert %-escapes to single characters, which works
-	   if the filesystem uses UTF-8.  On the other hand, we pass
-	   non-ascii characters through unchanged, which works if the
-	   filesystem is Latin-1 (we already lost any characters > 255
-	   long ago).  One day we will switch to IRIs, and probably
-	   become even more confused.  At least %20 will work. */
-
-	if(*p == '%')
-	{
-	    int h1, h2;
-	    
-	    if((h1 = hexval(*++p)) < 0 ||
-	       (h2 = hexval(*++p)) < 0)
-	    {
-		LT_ERROR1(LEFILE, "Error: bad %%-escape in file URL \"%s\"\n",
-			  url);
-		free(file);
-		return 0;
-	    }
-	    *q++ = h1 * 16 + h2;
-	}
-	else
-	    *q++ = *p;
+	file[0] = file[1] = '/';
+	file[2] = path[1];
     }
 
-    *q = 0;
+#else
+
+    /* Unix: a path is a path is a path! */
+
+    file = strdup8(path);
+
+#endif
+#endif
+#endif
+
+    /* XXX should undo any escapes */
 
     f = fopen(file, type);
     if(!f)
@@ -623,14 +631,3 @@ static void parse_url(const char *url,
 	}
 }
 
-
-static int hexval(int hex)
-{
-    if(hex >= '0' && hex <= '9')
-	return hex - '0';
-    if(hex >= 'a' && hex <= 'f')
-	return hex - 'a' + 10;
-    if(hex >= 'A' && hex <= 'F')
-	return hex - 'A' + 10;
-    return -1;
-}

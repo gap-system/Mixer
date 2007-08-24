@@ -8,22 +8,6 @@
 #include "rxputil.h"
 #include "namespaces.h"
 
-#if CHAR_SIZE == 16
-#include "nf16check.h"
-#else
-typedef int NF16Checker;
-#define NF16wrong 0
-
-#define nf16checkNew(x) 0
-#define nf16checkDelete(x)
-#define nf16checkStart(x)
-#define nf16checkNoStart(x)
-#define f16checkExists(x, y)
-#define nf16check(x, y) 1
-#define nf16checkL(x, y, z) 1
-
-#endif
-
 #ifdef FOR_LT
 #include "lt-hash.h"
 typedef HashTab *HashTable;
@@ -143,10 +127,7 @@ enum parser_flag {
     AllowUndeclaredNSAttributes,
     RelaxedAny,
     ReturnNamespaceAttributes,
-    ProcessDTD,
-    XML11Syntax,
-    XML11CheckNF,
-    XML11CheckExists
+    ProcessDTD
 };
 typedef enum parser_flag ParserFlag;
 
@@ -171,8 +152,6 @@ struct element_info {
 struct parser_state {
     enum parse_state state;
     int seen_validity_error;
-    XMLVersion xml_version;
-    unsigned char *map;		/* char type map for this version of XML */
     Entity document_entity;
     int have_dtd;		/* True if dtd has been processed */
     StandaloneDeclaration standalone;
@@ -192,15 +171,10 @@ struct parser_state {
     unsigned int flags[2];	/* We now have >32 flags */
     Vector(struct element_info, element_stack);
     struct namespace_binding base_ns;
-    void *dtd_callback_arg;
-    void *warning_callback_arg;
-    void *entity_opener_arg;
+    void *callback_arg;
     int external_pe_depth;	/* To keep track of whether we're in the */
 				/* internal subset: 0 <=> yes */
     HashTable id_table;
-    NF16Checker checker;
-    NF16Checker namechecker;    /* entity name and replacement text
-                                   checking overlap */
 };
 
 XML_API int init_parser(void);
@@ -225,9 +199,7 @@ XML_API XBit ParseDtd(Parser p, Entity e);
 XML_API void ParserSetWarningCallback(Parser p, CallbackProc cb);
 XML_API void ParserSetDtdCallback(Parser p, CallbackProc cb);
 XML_API void ParserSetEntityOpener(Parser p, EntityOpenerProc opener);
-XML_API void ParserSetDtdCallbackArg(Parser p, void *arg);
-XML_API void ParserSetWarningCallbackArg(Parser p, void *arg);
-XML_API void ParserSetEntityOpenerArg(Parser p, void *arg);
+XML_API void ParserSetCallbackArg(Parser p, void *arg);
 
 XML_API int ParserPush(Parser p, InputSource source);
 XML_API void ParserPop(Parser p);

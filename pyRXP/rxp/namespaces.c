@@ -75,7 +75,7 @@ void FreeNamespaceUniverse(NamespaceUniverse universe)
     Free(universe);
 }
 
-Namespace NewNamespace(NamespaceUniverse universe, const Char *nsname)
+Namespace NewNamespace(NamespaceUniverse universe, const char8 *uri)
 {
     Namespace ns;
 
@@ -84,7 +84,7 @@ Namespace NewNamespace(NamespaceUniverse universe, const Char *nsname)
 
     if(!(ns = Malloc(sizeof(*ns))))
 	return 0;
-    if(!(ns->nsname = Strdup(nsname)))
+    if(!(ns->uri = strdup8(uri)))
 	return 0;
     ns->nsnum = VectorCount(universe->namespaces);
     if(!VectorPush(universe->namespaces, ns))
@@ -106,7 +106,7 @@ static void FreeNamespace(Namespace ns)
     for(i=VectorCount(ns->attributes)-1; i>=0; --i)
 	FreeNSAttributeDefinition(ns->attributes[i]);
 
-    Free(ns->nsname);
+    Free(ns->uri);
     Free(ns->elements);
     Free(ns->attributes);
     Free(ns);
@@ -186,7 +186,7 @@ static void FreeNSAttributeDefinition(NSAttributeDefinition attribute)
 }
 
 Namespace
-    FindNamespace(NamespaceUniverse universe, const Char *nsname, int create)
+    FindNamespace(NamespaceUniverse universe, const char8 *uri, int create)
 {
     int i;
 
@@ -194,11 +194,11 @@ Namespace
 	universe = global_universe;
 
     for(i=VectorCount(universe->namespaces)-1; i>=0; --i)
-	if(Strcmp(nsname, universe->namespaces[i]->nsname) == 0)
+	if(strcmp8(uri, universe->namespaces[i]->uri) == 0)
 	    return universe->namespaces[i];
 
     if(create)
-	return NewNamespace(universe, nsname);
+	return NewNamespace(universe, uri);
 
     return 0;
 }

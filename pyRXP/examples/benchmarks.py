@@ -51,7 +51,7 @@ def parseWithPyRXP(parser, rawdata):
 
 def loadRparseXML():
     #it's a module, what the heck
-    from reportlab.lib import rparsexml
+    from rlextra.radxml import rparsexml
     return rparsexml
 
 def parseWithRParseXML(rparsexml, rawdata):
