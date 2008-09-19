@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-#copyright ReportLab Inc. 2000-2002
+#Copyright ReportLab Europe Ltd. 2000-2004
 #see license.txt for license details
-#history http://cvs.sourceforge.net/cgi-bin/cvsweb.cgi/rl_addons/pyRXP/setup.py?cvsroot=reportlab
-#$Header$
+#history http://www.reportlab.co.uk/cgi-bin/viewcvs.cgi/public/reportlab/trunk/rl_addons/pyRXP/setup.py
 if __name__=='__main__': #NO RUNTESTS
 	import os, sys, shutil, re
 	from distutils.core import setup, Extension
@@ -26,19 +25,12 @@ if __name__=='__main__': #NO RUNTESTS
 		LIBS=['nsl', 'socket', 'dl']
 	elif sys.platform=="aix4":
 		LIBS=['nsl_r', 'dl']
-	elif sys.platform in ("freebsd4", "darwin", "mac", "linux2", "linux-i386"):
-		LIBS=[]
 	else:
-		msg = "Don't know about system %s" % sys.platform
-		if int(os.environ.get('LIBERROR',1)): 
-			raiseConfigError(msg+'\nset environment LIBERROR=0 to try no extra libs')
-		else:
-			print msg
-			LIBS=[]
+		LIBS=[]
 
 	rxpFiles = ('xmlparser.c', 'url.c', 'charset.c', 'string16.c', 'ctype16.c', 
                 'dtd.c', 'input.c', 'stdio16.c', 'system.c', 'hash.c', 
-                'version.c', 'namespaces.c', 'http.c')
+                'version.c', 'namespaces.c', 'http.c', 'nf16check.c', 'nf16data.c')
 	RXPLIBSOURCES=[]
 	RXPDIR='rxp'
 	for f in rxpFiles:
@@ -102,7 +94,7 @@ if __name__=='__main__': #NO RUNTESTS
                 ]
 			)
 
-	if sys.platform=='win32' and ('install' in sys.argv or 'install_ext' in sys.argv):
+	if sys.hexversion<0x2030000 and sys.platform=='win32' and ('install' in sys.argv or 'install_ext' in sys.argv):
 		def MovePYDs(*F):
 			for x in sys.argv:
 				if x[:18]=='--install-platlib=': return
