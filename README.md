@@ -1,12 +1,10 @@
-                                 The MIXER
+### The MIXER
 
 Copyright (C) 2003 Max Neunhoeffer, 
                    Lehrstuhl D fuer Mathematik, RWTH Aachen
  
 This software is protected under the GNU General Public License
 (see the file "GPL.txt" in die main distribution directory for details).
-
-$Id$
 
 
 The mixer is little Max's version  of a "Content Management System". The
