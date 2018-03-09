@@ -16,24 +16,27 @@
 \usepackage[english]{babel}
 \usepackage[a4paper,nohead]{geometry}
 \usepackage{times}
-\usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage{color}
 \definecolor{MyBlue}{rgb}{0.01,0.05,0.5}
 \definecolor{MyGreen}{rgb}{0.01,0.4,0.05}
 \definecolor{MyRed}{rgb}{0.7,0.01,0.05}
-\usepackage[colorlinks=true,%hypertex,
+\usepackage{hyperref}
+
+\hypersetup{colorlinks=true,%hypertex,
             linkcolor=MyBlue,urlcolor=MyRed,citecolor=MyGreen,
             pdftitle={mixer - maintaining web sites easily},
-            pdfauthor={Max Neunh\string\öffer},
+            pdfauthor={Max NeunÃ¶ffer},
             pdfsubject={mixer},
-            pdfkeywords={content management mixer web site tree}]{hyperref}
+            pdfkeywords={content management mixer web site tree}
+            }
 
 \newcommand{\mixer}{\texttt{mixer}}
 \newcommand{\MIXERROOT}{\texttt{MIXERROOT}}
 
 \begin{document}
 \title{{\mixer} --- maintaining web sites easily}
-\author{Max Neunhöffer \\ \texttt{max.neunhoeffer@math.rwth-aachen.de}}
+\author{Max NeunhÃ¶ffer \\ \texttt{max.neunhoeffer@math.rwth-aachen.de}}
 \date{\today}
 \maketitle
 
@@ -87,10 +90,10 @@ Assume \verb!default.html! looks like this:
 
 {\small
 \begin{verbatim}
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <link href="/lib/default.css" type="text/css" rel="StyleSheet" />
   <style type="text/css" media="screen">@import url(/lib/default.css);</style>
   <title><mixer var="title">Here will be the title</mixer></title>
@@ -104,7 +107,7 @@ Assume \verb!default.html! looks like this:
 and \verb!index.mixer! looks like this:
 
 \begin{verbatim}
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <mixer template="default.tmpl"> 
 <mixertitle>My title</mixertitle>
@@ -136,7 +139,7 @@ in the head of the document and in the \verb!<h1>! element.
 
 The value of the variable \verb!semester! is substituted for
 \verb!<mixer var="semester"/>! and from the address database
-a link to the personal page of Max Neunhöffer together with his
+a link to the personal page of Max NeunhÃ¶ffer together with his
 name is inserted instead of 
 
 \hspace*{1cm}\verb!<mixer person="Max Neunhoeffer" data="name_link"/>!
@@ -462,7 +465,7 @@ Any element of type \verb!mixer! having an attribute \verb!parsevar! is
 replaced by a full tree from the variable that has the name of the
 value of the attribute. That means that the (string) content of the
 variable is parsed (an XML file header is prepended indicating
-ISO-8859-1 encoding and one pair of tags \verb!<mixer>! and \verb!</mixer>!
+UTF-8 encoding and one pair of tags \verb!<mixer>! and \verb!</mixer>!
 is put around the content of the variable). The resulting tree is
 then written out recursively, following the standard rules. 
 
