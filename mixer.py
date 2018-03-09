@@ -119,7 +119,7 @@ def workerfunc(path,filename):
                 err.write('Warning: Variable '+a['var']+' undefined!\n')
         elif a.has_key('parsevar'):
             if config.has_key(a['parsevar']):
-                t = '<?xml version="1.0" encoding="ISO-8859-1"?>\n<mixer>\n'+\
+                t = '<?xml version="1.0" encoding="utf-8"?>\n<mixer>\n'+\
                     config[a['parsevar']] + \
                     '</mixer>'
                 e = maxml.parse_string_for_rewrite(t)
@@ -336,7 +336,7 @@ def workerfunc(path,filename):
             sys.exit(9)
         template = maxml.parse_file_for_rewrite(MIXERROOT+tmpl+template)
         out = file(target,"w")
-        out.write('<?xml version="1.0" encoding="ISO-8859-1"?>\n\n')
+        out.write('<?xml version="1.0" encoding="utf-8"?>\n\n')
         if not(nodoctype):
             out.write('''<!DOCTYPE html 
      PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
